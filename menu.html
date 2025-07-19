@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Menú Principal - Andalucía RP</title>
+    <style>
+        body { font-family: Arial, sans-serif; background: #222; color: #fff; }
+        .menu-box { background: #333; padding: 30px; border-radius: 8px; width: 350px; margin: 100px auto; box-shadow: 0 0 10px #000; }
+        button { width: 100%; padding: 10px; background: #007bff; color: #fff; border: none; border-radius: 4px; cursor: pointer; margin-bottom: 10px; }
+        h2 { margin-bottom: 20px; }
+    </style>
+</head>
+<body>
+    <div class="menu-box">
+        <h2>Menú Principal</h2>
+        <div id="opciones"></div>
+        <button onclick="logout()">Cerrar sesión</button>
+    </div>
+    <script>
+        const rol = localStorage.getItem('rol');
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        function cargarOpciones() {
+            const opciones = document.getElementById('opciones');
+            if (rol === 'admin') {
+                opciones.innerHTML = `
+                    <button onclick=\"window.location.href='panel_usuarios.html'\">Panel de administración de usuarios</button>
+                    <button onclick=\"window.location.href='panel_unidades.html'\">Panel de control de unidades</button>
+                `;
+            } else if (rol === 'agente') {
+                window.location.href = 'panel_agente.html';
+            } else {
+                opciones.innerHTML = `
+                    <button onclick=\"window.location.href='panel_unidades.html'\">Panel de control de unidades</button>
+                `;
+            }
+        }
+        cargarOpciones();
+    </script>
+</body>
+</html>

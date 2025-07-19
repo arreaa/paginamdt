@@ -1,0 +1,26 @@
+[
+  {
+    "nombre": "0R2",
+    "agentes": [
+      "127",
+      "128"
+    ],
+    "estado": "ocupada"
+  },
+  {
+    "nombre": "5FL",
+    "estado": "libre",
+    "agentes": [
+      "127",
+      "128"
+    ]
+  },
+  {
+    "nombre": "0R2",
+    "estado": "libre",
+    "agentes": [
+      "127",
+      "128"
+    ]
+  }
+]

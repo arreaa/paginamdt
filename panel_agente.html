@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de agente</title>
+    <link rel="stylesheet" href="panel_unidades.css">
+</head>
+<body>
+    <div class="panel">
+        <h2>Unidades en servicio</h2>
+        <div class="table-box">
+            <table id="tablaUnidades" style="border:4px solid #000;width:100%;background:#232323;color:#e0e0e0;">
+                <thead>
+                    <tr>
+                        <th style="width:15%">Unidad</th>
+                        <th style="width:30%">Agentes</th>
+                        <th style="width:15%">Estado</th>
+                        <th style="width:30%">Anotaciones</th>
+                        <th style="width:20%">Etiquetas</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+        <button class="volver" onclick="window.location.href='menu.html'">Volver al menú</button>
+        <button class="volver" onclick="logout()">Cerrar sesión</button>
+    </div>
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+        let agentes = [];
+        let etiquetas = [];
+        function cargarAgentes() {
+            fetch('/api/usuarios')
+                .then(res => res.json())
+                .then(usuarios => {
+                    agentes = usuarios;
+                });
+        }
+        function cargarEtiquetas() {
+            fetch('/api/etiquetas')
+                .then(res => res.json())
+                .then(data => {
+                    etiquetas = data;
+                });
+        }
+        function cargarUnidades() {
+            fetch('/api/unidades')
+                .then(res => res.json())
+                .then(unidades => {
+                    const tbody = document.querySelector('#tablaUnidades tbody');
+                    tbody.innerHTML = '';
+                    unidades.forEach(u => {
+                        if (!u.agentes) u.agentes = [];
+                        const rowSpan = Math.max(u.agentes.length, 1);
+                        let unidadHtml = '';
+                        if (u.agentes.length > 0) {
+                            const agente = agentes.find(a => a.placa === u.agentes[0]);
+                            unidadHtml += `<tr>`;
+                            unidadHtml += `<td rowspan="${rowSpan}">${u.nombre}</td>`;
+                            unidadHtml += `<td class='agente-celda'>${agente ? `<span style='color:#fff'>${agente.nombre}</span>` : u.agentes[0]} (${u.agentes[0]})<br><span class='agente-rango'>${agente ? agente.rango : ''}</span></td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}">${u.estado}</td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}"><div style='min-width:120px;white-space:pre-line;'>${u.nota ? u.nota : ''}</div></td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}">${(u.etiquetas||[]).map(e => `<span style='background:${e.color};color:#fff;padding:2px 8px;border-radius:6px;margin-right:4px;'>${e.nombre}</span>`).join('')}</td>`;
+                            unidadHtml += `</tr>`;
+                            for (let i = 1; i < u.agentes.length; i++) {
+                                const agente = agentes.find(a => a.placa === u.agentes[i]);
+                                unidadHtml += `<tr><td class='agente-celda'>${agente ? `<span style='color:#fff'>${agente.nombre}</span>` : u.agentes[i]} (${u.agentes[i]})<br><span class='agente-rango'>${agente ? agente.rango : ''}</span></td></tr>`;
+                            }
+                        } else {
+                            unidadHtml += `<tr>`;
+                            unidadHtml += `<td>${u.nombre}</td>`;
+                            unidadHtml += `<td></td>`;
+                            unidadHtml += `<td>${u.estado}</td>`;
+                            unidadHtml += `<td><div style='min-width:120px;white-space:pre-line;'>${u.nota ? u.nota : ''}</div></td>`;
+                            unidadHtml += `<td>${(u.etiquetas||[]).map(e => `<span style='background:${e.color};color:#fff;padding:2px 8px;border-radius:6px;margin-right:4px;'>${e.nombre}</span>`).join('')}</td>`;
+                            unidadHtml += `</tr>`;
+                        }
+                        tbody.innerHTML += unidadHtml;
+                    });
+                });
+        }
+        cargarAgentes();
+        cargarEtiquetas();
+        cargarUnidades();
+    </script>
+</body>
+</html>

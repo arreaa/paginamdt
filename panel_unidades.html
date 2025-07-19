@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel de control de unidades</title>
+    <link rel="stylesheet" href="panel_unidades.css">
+</head>
+<body>
+    <div class="panel">
+        <h2>Control de unidades</h2>
+        <div class="flex">
+            <div class="form-box">
+                <h3>Agregar unidad</h3>
+                <div id="error" style="color:#ff4d4d"></div>
+                <input type="text" id="nombreUnidad" placeholder="Nombre de la unidad">
+                <select id="estadoUnidad">
+                    <option value="libre">Libre</option>
+                    <option value="ocupada">Ocupada</option>
+                </select>
+                <div class="agentes-list">
+                    <label>Placas de agentes (separadas por coma):</label>
+                    <input type="text" id="placasAgentes" placeholder="Ejemplo: 1234,5678">
+                </div>
+                <div class="nota-list">
+                    <label>Anotaciones de la unidad:</label>
+                    <textarea id="notaUnidad" rows="2" style="width:100%;margin-top:8px;resize:vertical;"></textarea>
+                </div>
+                <button onclick="agregarUnidad()">Agregar unidad</button>
+            </div>
+            <div class="table-box">
+                <h3>Unidades en servicio</h3>
+                <table id="tablaUnidades" style="border:4px solid #000;width:100%;background:#fff;color:#000;">
+                    <thead>
+                        <tr>
+                            <th style="width:15%">Unidad</th>
+                            <th style="width:30%">Agentes</th>
+                            <th style="width:15%">Estado</th>
+                            <th style="width:30%">Anotaciones</th>
+                            <th style="width:20%">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+        </div>
+        <button class="volver" onclick="window.location.href='menu.html'">Volver al menú</button>
+    </div>
+    <script>
+        let agentes = [];
+        // Eliminado código de etiquetas
+        function cargarAgentes() {
+            fetch('/api/usuarios')
+                .then(res => res.json())
+                .then(usuarios => {
+                    agentes = usuarios;
+                });
+        }
+        // Eliminado código de etiquetas
+        function cargarUnidades() {
+            fetch('/api/unidades')
+                .then(res => res.json())
+                .then(unidades => {
+                    const tbody = document.querySelector('#tablaUnidades tbody');
+                    tbody.innerHTML = '';
+                    unidades.forEach(u => {
+                        if (!u.agentes) u.agentes = [];
+                        const rowSpan = Math.max(u.agentes.length, 1);
+                        let unidadHtml = '';
+                        if (u.agentes.length > 0) {
+                            // Primera fila: unidad, primer agente, estado, anotaciones, acciones
+                            const agente = agentes.find(a => a.placa === u.agentes[0]);
+                            unidadHtml += `<tr>`;
+                            unidadHtml += `<td rowspan="${rowSpan}">${u.nombre}</td>`;
+                            unidadHtml += `<td class='agente-celda'>${agente ? `<span style='color:#fff'>${agente.nombre}</span>` : u.agentes[0]} (${u.agentes[0]})<br><span class='agente-rango'>${agente ? agente.rango : ''}</span></td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}">${u.estado}</td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}"><textarea style='width:100%;min-height:40px;resize:vertical;' onchange="modificarNotaUnidad('${u.nombre}', this.value)">${u.nota || ''}</textarea></td>`;
+                            unidadHtml += `<td rowspan="${rowSpan}"><button onclick="cambiarEstado('${u.nombre}', '${u.estado === 'libre' ? 'ocupada' : 'libre'}')">Marcar como ${u.estado === 'libre' ? 'ocupada' : 'libre'}</button><br><button onclick="eliminarUnidad('${u.nombre}')">Eliminar unidad</button></td>`;
+                            unidadHtml += `</tr>`;
+                            // Resto de agentes
+                            for (let i = 1; i < u.agentes.length; i++) {
+                                const agente = agentes.find(a => a.placa === u.agentes[i]);
+                                unidadHtml += `<tr><td class='agente-celda'>${agente ? `<span style='color:#fff'>${agente.nombre}</span>` : u.agentes[i]} (${u.agentes[i]})<br><span class='agente-rango'>${agente ? agente.rango : ''}</span></td></tr>`;
+                            }
+                        } else {
+                            // Sin agentes
+                            unidadHtml += `<tr>`;
+                            unidadHtml += `<td>${u.nombre}</td>`;
+                            unidadHtml += `<td></td>`;
+                            unidadHtml += `<td>${u.estado}</td>`;
+                            unidadHtml += `<td><textarea style='width:100%;min-height:40px;resize:vertical;' onchange="modificarNotaUnidad('${u.nombre}', this.value)">${u.nota || ''}</textarea></td>`;
+                            unidadHtml += `<td><button onclick="cambiarEstado('${u.nombre}', '${u.estado === 'libre' ? 'ocupada' : 'libre'}')">Marcar como ${u.estado === 'libre' ? 'ocupada' : 'libre'}</button><br><button onclick="eliminarUnidad('${u.nombre}')">Eliminar/Modificar unidad</button></td>`;
+                            unidadHtml += `</tr>`;
+                        }
+                        tbody.innerHTML += unidadHtml;
+                    });
+                });
+        }
+        function eliminarUnidad(nombre) {
+            fetch(`/api/unidades/${nombre}`, {
+                method: 'DELETE'
+            })
+            .then(res => res.json())
+            .then(data => {
+                cargarUnidades();
+            });
+        }
+        function agregarUnidad() {
+            const nombre = document.getElementById('nombreUnidad').value;
+            const estado = document.getElementById('estadoUnidad').value;
+            const placasStr = document.getElementById('placasAgentes').value;
+            const agentesArr = placasStr.split(',').map(p => p.trim()).filter(p => p);
+            const nota = document.getElementById('notaUnidad').value;
+            fetch('/api/unidades', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre, estado, agentes: agentesArr, nota })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.mensaje === 'Unidad agregada') {
+                    cargarUnidades();
+                    document.getElementById('error').innerText = '';
+                } else {
+                    document.getElementById('error').innerText = data.mensaje;
+                }
+            });
+        }
+        function modificarNotaUnidad(nombre, nota) {
+            fetch(`/api/unidades/${nombre}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nota })
+            })
+            .then(res => res.json())
+            .then(data => {
+                // Opcional: mostrar mensaje de éxito
+            });
+        }
+        function cambiarEstado(nombre, estado) {
+            fetch(`/api/unidades/${nombre}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ estado })
+            })
+            .then(res => res.json())
+            .then(data => {
+                cargarUnidades();
+            });
+        }
+        cargarAgentes();
+        cargarEtiquetas();
+        cargarUnidades();
+    </script>
+    </script>
+</body>
+</html>

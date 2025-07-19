@@ -1,0 +1,30 @@
+[
+  {
+    "placa": "admin01",
+    "contrasena": "adminpass",
+    "rol": "admin",
+    "nombre": "Administrador",
+    "rango": "Jefe"
+  },
+  {
+    "placa": "127",
+    "contrasena": "127",
+    "rol": "usuario",
+    "nombre": "Andrés Núñez",
+    "rango": "Subinspector"
+  },
+  {
+    "placa": "120",
+    "contrasena": "120",
+    "rol": "admin",
+    "nombre": "André Núñez",
+    "rango": "DAO"
+  },
+  {
+    "placa": "128",
+    "contrasena": "128",
+    "rol": "agente",
+    "nombre": "PRUEBA",
+    "rango": "PRUEBARANGO"
+  }
+]
